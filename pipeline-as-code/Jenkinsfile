@@ -1,0 +1,57 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+  }
+
+  environment {
+    CI = "true"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Install') {
+      steps {
+        dir('pipeline-as-code') {
+          sh 'npm ci'
+        }
+      }
+    }
+
+    stage('Lint') {
+      steps {
+        dir('pipeline-as-code') {
+          sh 'npm run lint'
+        }
+      }
+    }
+
+    stage('Build') {
+      steps {
+        dir('pipeline-as-code') {
+          sh 'npm run build'
+        }
+      }
+    }
+
+    stage('Test (optional)') {
+      steps {
+        dir('pipeline-as-code') {
+          sh 'npm test --if-present'
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      echo "Pipeline finished."
+    }
+  }
+}
