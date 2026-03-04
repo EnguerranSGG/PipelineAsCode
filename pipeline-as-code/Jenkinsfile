@@ -40,13 +40,22 @@ pipeline {
       }
     }
 
-    stage('Test (optional)') {
+    stage('Deploy Heroku') {
       steps {
-        dir('pipeline-as-code') {
-          sh 'npm test --if-present'
+        withCredentials([string(credentialsId: 'HEROKU_API_KEY', variable: 'HEROKU_TOKEN')]) {
+          sh '''
+            set -e
+
+            # On pousse la branche buildée vers Heroku (branche main côté Heroku)
+            # IMPORTANT : on pousse via HTTPS avec token, sans afficher le token.
+            git remote remove heroku || true
+            git remote add heroku https://heroku:$HEROKU_TOKEN@git.heroku.com/$HEROKU_APP.git
+
+            # On pousse la branche "develop" du repo vers "main" sur Heroku
+            git push heroku HEAD:main --force
+          '''
         }
       }
-    }
   }
 
   post {
