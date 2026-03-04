@@ -1,19 +1,21 @@
 pipeline {
-  agent any
-
-  options {
-    timestamps()
+  agent {
+    docker {
+      image 'node:20-alpine'
+      args '-u root:root'
+    }
   }
+
+  options { timestamps() }
 
   environment {
     CI = "true"
+    HEROKU_APP = "pipeline-as-code"
   }
 
   stages {
     stage('Checkout') {
-      steps {
-        checkout scm
-      }
+      steps { checkout scm }
     }
 
     stage('Install') {
@@ -45,23 +47,16 @@ pipeline {
         withCredentials([string(credentialsId: 'HEROKU_API_KEY', variable: 'HEROKU_TOKEN')]) {
           sh '''
             set -e
-
-            # On pousse la branche buildée vers Heroku (branche main côté Heroku)
-            # IMPORTANT : on pousse via HTTPS avec token, sans afficher le token.
             git remote remove heroku || true
             git remote add heroku https://heroku:$HEROKU_TOKEN@git.heroku.com/$HEROKU_APP.git
-
-            # On pousse la branche "develop" du repo vers "main" sur Heroku
             git push heroku HEAD:main --force
           '''
         }
       }
-    }     
-  }       
+    }
+  }
 
   post {
-    always {
-      echo "Pipeline finished."
-    }
+    always { echo "Pipeline finished." }
   }
 }
