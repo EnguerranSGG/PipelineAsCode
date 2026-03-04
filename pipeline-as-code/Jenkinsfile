@@ -43,17 +43,19 @@ pipeline {
     }
 
     stage('Deploy Heroku') {
-      steps {
-        withCredentials([string(credentialsId: 'HEROKU_API_KEY', variable: 'HEROKU_TOKEN')]) {
-          sh '''
-            set -e
-            git remote remove heroku || true
-            git remote add heroku https://heroku:$HEROKU_TOKEN@git.heroku.com/$HEROKU_APP.git
-            git push heroku HEAD:main --force
-          '''
-        }
-      }
+  steps {
+    withCredentials([string(credentialsId: 'HEROKU_API_KEY', variable: 'HEROKU_TOKEN')]) {
+      sh '''
+        set -e
+        apk add --no-cache git
+
+        git remote remove heroku || true
+        git remote add heroku https://heroku:$HEROKU_TOKEN@git.heroku.com/$HEROKU_APP.git
+        git push heroku HEAD:main --force
+      '''
     }
+  }
+}
   }
 
   post {
